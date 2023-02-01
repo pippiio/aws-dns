@@ -1,6 +1,6 @@
 locals {
   redirect_domains = merge(
-    merge([for domain, zone in var.zones : {
+    merge([for domain, zone in var.config : {
       "${domain}" = {
         zone   = domain
         record = "@"
@@ -12,7 +12,7 @@ locals {
         values = [zone.webredirect]
       }
     } if zone.webredirect != null]...),
-    merge(flatten([for domain, zone in var.zones : [
+    merge(flatten([for domain, zone in var.config : [
       for subdomain, record in zone.records : {
         replace("${subdomain}.${domain}", "/^@\\./", "") = {
           zone   = domain
@@ -24,10 +24,10 @@ locals {
   )
 
   redirect_zones = merge(
-    { for domain, zone in var.zones : domain => [domain, "www.${domain}"] if zone.webredirect != null },
-    { for domain, zone in var.zones : domain => sort([for subdomain, record in zone.records : replace("${subdomain}.${domain}", "/^@\\./", "")
+    { for domain, zone in var.config : domain => tolist([domain, "www.${domain}"]) if zone.webredirect != null },
+    { for domain, zone in var.config : domain => tolist(sort([for subdomain, record in zone.records : replace("${subdomain}.${domain}", "/^@\\./", "")
       if lower(record.type) == "redirect"]
-    ) if length([for record in values(zone.records) : record if lower(record.type) == "redirect"]) > 0 }
+    )) if length([for record in values(zone.records) : record if lower(record.type) == "redirect"]) > 0 }
   )
 }
 
@@ -46,27 +46,27 @@ resource "aws_acm_certificate" "redirect" {
 }
 
 resource "aws_route53_record" "redirect_certificate" {
-  for_each = { for entry in flatten([for zone, certificate in aws_acm_certificate.redirect : [
-    for validation in certificate.domain_validation_options : {
-      zone   = zone
-      domain = validation.domain_name
-      name   = validation.resource_record_name
-      value  = validation.resource_record_value
-  }]]) : "${entry.zone}/${entry.domain}" => entry }
+  for_each = { for entry in flatten([
+    for zone, redirects in local.redirect_zones : [
+      for redirect in redirects : {
+        zone  = zone
+        index = index(redirects, redirect)
+
+  }]]) : "${entry.zone}/${entry.index}" => entry }
 
   zone_id         = aws_route53_zone.this[each.value.zone].zone_id
-  name            = each.value.name
+  name            = tolist(aws_acm_certificate.redirect[each.value.zone].domain_validation_options)[each.value.index].resource_record_name
+  records         = [tolist(aws_acm_certificate.redirect[each.value.zone].domain_validation_options)[each.value.index].resource_record_value]
   type            = "CNAME"
   ttl             = 3600
-  records         = [each.value.value]
   allow_overwrite = true
 }
 
 resource "aws_acm_certificate_validation" "redirect" {
-  for_each = aws_acm_certificate.redirect
+  for_each = local.redirect_zones
   provider = aws.use1
 
-  certificate_arn = each.value.arn
+  certificate_arn = aws_acm_certificate.redirect[each.key].arn
   validation_record_fqdns = [
     for record in values(aws_route53_record.redirect_certificate) : record.fqdn
     if record.zone_id == aws_route53_zone.this[each.key].zone_id
@@ -127,7 +127,9 @@ resource "aws_cloudfront_function" "redirect" {
   runtime = "cloudfront-js-1.0"
   comment = "HTTP 301 redirect"
   publish = true
-  code    = templatefile("${path.module}/src/redirect.js", { redirects = { for domain, redirect in local.redirect_domains : domain => one(redirect.values) } })
+  code = templatefile("${path.module}/function/redirect.js", {
+    redirects = { for domain, redirect in local.redirect_domains : domain => one(redirect.values) }
+  })
 }
 
 resource "aws_route53_record" "redirect_cloudfront" {

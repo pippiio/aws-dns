@@ -1,6 +1,6 @@
 resource "aws_route53_record" "this" {
   for_each = { for entry in flatten([
-    for domain, zone in var.zones : [
+    for domain, zone in var.config : [
       for key, record in zone.records : {
         key    = key
         zone   = domain
@@ -23,7 +23,7 @@ resource "aws_route53_record" "this" {
 
 resource "aws_route53_record" "cloudfront" {
   for_each = { for entry in flatten([
-    for domain, zone in var.zones : [
+    for domain, zone in var.config : [
       for key, record in zone.records : {
         key    = key
         zone   = domain
