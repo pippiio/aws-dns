@@ -1,5 +1,5 @@
 function handler(event) {
-  var statusCode = 301;
+  var statusCode = 308; #https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308
   var description = 'Moved Permanently';
   var headers = {}
 
