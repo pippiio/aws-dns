@@ -183,3 +183,18 @@ resource "aws_route53_record" "redirect_cloudfront" {
 data "aws_cloudfront_cache_policy" "redirect" {
   name = "Managed-CachingDisabled"
 }
+
+data "aws_cloudfront_cache_policy" "additional" {
+  for_each = var.config.additional_behaviors
+  name = each.value.cache_policy
+}
+
+data "aws_cloudfront_origin_request_policy" "additional" {
+  for_each = var.config.additional_behaviors
+  name = each.value.origin_request_policy
+}
+
+data "aws_cloudfront_response_headers_policy" "additional" {
+  for_each = var.config.additional_behaviors
+  name = each.value.response_headers_policy
+}
