@@ -113,7 +113,7 @@ resource "aws_cloudfront_distribution" "redirect" {
 
     content {
       path_pattern               = ordered_cache_behavior.key
-      target_origin_id           = ordered_cache_behavior.value.origin
+      target_origin_id           = "self"
       allowed_methods            = ordered_cache_behavior.value.allowed_methods
       cached_methods             = ordered_cache_behavior.value.cached_methods
       cache_policy_id            = data.aws_cloudfront_cache_policy.additional[ordered_cache_behavior.key].id
@@ -186,15 +186,15 @@ data "aws_cloudfront_cache_policy" "redirect" {
 
 data "aws_cloudfront_cache_policy" "additional" {
   for_each = var.config.additional_behaviors
-  name = each.value.cache_policy
+  name     = each.value.cache_policy
 }
 
 data "aws_cloudfront_origin_request_policy" "additional" {
   for_each = var.config.additional_behaviors
-  name = each.value.origin_request_policy
+  name     = each.value.origin_request_policy
 }
 
 data "aws_cloudfront_response_headers_policy" "additional" {
   for_each = var.config.additional_behaviors
-  name = each.value.response_headers_policy
+  name     = each.value.response_headers_policy
 }
