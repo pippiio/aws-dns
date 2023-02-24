@@ -108,6 +108,39 @@ resource "aws_cloudfront_distribution" "redirect" {
       function_arn = aws_cloudfront_function.redirect.arn
     }
   }
+  dynamic "ordered_cache_behavior" {
+    for_each = var.config.additional_behaviors
+
+    content {
+      path_pattern               = ordered_cache_behavior.key
+      target_origin_id           = ordered_cache_behavior.value.origin
+      allowed_methods            = ordered_cache_behavior.value.allowed_methods
+      cached_methods             = ordered_cache_behavior.value.cached_methods
+      cache_policy_id            = data.aws_cloudfront_cache_policy.additional[ordered_cache_behavior.key].id
+      origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.additional[ordered_cache_behavior.key].id
+      response_headers_policy_id = data.aws_cloudfront_response_headers_policy.additional[ordered_cache_behavior.key].id
+      compress                   = true
+      viewer_protocol_policy     = "redirect-to-https"
+
+      dynamic "function_association" {
+        for_each = ordered_cache_behavior.value.viewer_request_function != null ? [1] : []
+
+        content {
+          event_type   = "viewer-request"
+          function_arn = ordered_cache_behavior.value.viewer_request_function
+        }
+      }
+
+      dynamic "function_association" {
+        for_each = ordered_cache_behavior.value.viewer_response_function != null ? [1] : []
+
+        content {
+          event_type   = "viewer-response"
+          function_arn = ordered_cache_behavior.value.viewer_response_function
+        }
+      }
+    }
+  }
 
   restrictions {
     geo_restriction {
