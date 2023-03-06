@@ -1,6 +1,7 @@
 variable "config" {
   type = map(object({
-    webredirect = optional(string)
+    disable_dnssec = optional(bool, false)
+    webredirect    = optional(string)
 
     records = optional(map(object({
       type   = string
