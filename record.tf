@@ -13,7 +13,7 @@ resource "aws_route53_record" "this" {
   ], lower(record.type))]]) : "${entry.zone}/${entry.type}/${entry.key}" => entry }
 
   zone_id         = aws_route53_zone.this[each.value.zone].zone_id
-  name            = replace("${each.value.key}.${each.value.zone}", "/^[^\\w\\d]\\./", "")
+  name            = replace("${each.value.key}.${each.value.zone}", "/^[!@#$%&]\\./", "")
   type            = upper(each.value.type)
   ttl             = each.value.ttl
   records         = each.value.values
