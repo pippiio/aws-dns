@@ -62,8 +62,6 @@ data "aws_iam_policy_document" "dnssec" {
 }
 
 resource "aws_kms_key" "dnssec" {
-  provider = aws.use1
-
   description              = "KMS CMK used for Route53 DNSSEC signing"
   enable_key_rotation      = false
   customer_master_key_spec = "ECC_NIST_P256"
@@ -76,8 +74,6 @@ resource "aws_kms_key" "dnssec" {
 }
 
 resource "aws_kms_alias" "dnssec" {
-  provider = aws.use1
-
   name          = "alias/${local.name_prefix}dnssec-kms-cmk"
   target_key_id = aws_kms_key.dnssec.key_id
 }

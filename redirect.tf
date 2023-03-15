@@ -33,7 +33,6 @@ locals {
 
 resource "aws_acm_certificate" "redirect" {
   for_each = local.redirect_zones
-  provider = aws.use1
 
   domain_name               = each.value[0]
   subject_alternative_names = each.value
@@ -64,7 +63,6 @@ resource "aws_route53_record" "redirect_certificate" {
 
 resource "aws_acm_certificate_validation" "redirect" {
   for_each = local.redirect_zones
-  provider = aws.use1
 
   certificate_arn = aws_acm_certificate.redirect[each.key].arn
   validation_record_fqdns = [
@@ -142,7 +140,7 @@ resource "aws_route53_record" "redirect_cloudfront" {
 
   alias {
     name                   = aws_cloudfront_distribution.redirect[each.value.zone].domain_name
-    zone_id                = "Z2FDTNDATAQYW2" # AWS Cloudfront zone id
+    zone_id                = aws_cloudfront_distribution.redirect[each.value.zone].hosted_zone_id
     evaluate_target_health = true
   }
 }

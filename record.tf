@@ -8,13 +8,12 @@ resource "aws_route53_record" "this" {
         type   = record.type
         ttl    = record.ttl
         } if !contains([
-          "alias",
           "cloudfront",
           "redirect",
   ], lower(record.type))]]) : "${entry.zone}/${entry.type}/${entry.key}" => entry }
 
   zone_id         = aws_route53_zone.this[each.value.zone].zone_id
-  name            = trimprefix(trimprefix("${each.value.key}.${each.value.zone}", "#."), "$.")
+  name            = replace("${each.value.key}.${each.value.zone}", "/^[^\\w\\d]\\./", "")
   type            = upper(each.value.type)
   ttl             = each.value.ttl
   records         = each.value.values
@@ -28,7 +27,7 @@ resource "aws_route53_record" "cloudfront" {
         key    = key
         zone   = domain
         values = record.values
-  } if lower(record.type) == "alias"]]) : "${entry.zone}/${entry.key}" => entry }
+  } if lower(record.type) == "cloudfront"]]) : "${entry.zone}/${entry.key}" => entry }
 
   zone_id         = aws_route53_zone.this[each.value.zone].zone_id
   name            = "${each.value.key}.${each.value.zone}"
