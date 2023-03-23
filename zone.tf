@@ -1,5 +1,5 @@
 resource "aws_route53_zone" "this" {
-  for_each = var.config
+  for_each = var.domains
 
   name = each.key
   tags = local.default_tags
