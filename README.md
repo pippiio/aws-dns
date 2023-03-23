@@ -15,6 +15,7 @@ module "dns" {
 
   config      = {
     "example.com" = {
+      email = "fastmail"
       records = {
         "@" = {
           type   = "redirect"
@@ -32,7 +33,7 @@ module "dns" {
           type   = "cname"
           values = ["www.example.com"]
         }
-        "$" = {
+        "$" = { # Apex mx record
           type = "mx"
           ttl  = 3600
           values = [
@@ -42,7 +43,7 @@ module "dns" {
         "#" = { # Apex txt record
           type   = "txt"
           ttl    = 3600
-          values = ["v=spf1 -all"]
+          values = ["v=spf1 ~all"]
         }
       }
     }

@@ -1,6 +1,6 @@
 locals {
   redirect_domains = merge(
-    merge([for domain, zone in var.config : {
+    merge([for domain, zone in var.domains : {
       "${domain}" = {
         zone   = domain
         record = "@"
@@ -12,7 +12,7 @@ locals {
         values = [zone.webredirect]
       }
     } if zone.webredirect != null]...),
-    merge(flatten([for domain, zone in var.config : [
+    merge(flatten([for domain, zone in var.domains : [
       for subdomain, record in zone.records : {
         replace("${subdomain}.${domain}", "/^@\\./", "") = {
           zone   = domain
@@ -24,8 +24,8 @@ locals {
   )
 
   redirect_zones = merge(
-    { for domain, zone in var.config : domain => tolist([domain, "www.${domain}"]) if zone.webredirect != null },
-    { for domain, zone in var.config : domain => tolist(sort([for subdomain, record in zone.records : replace("${subdomain}.${domain}", "/^@\\./", "")
+    { for domain, zone in var.domains : domain => tolist([domain, "www.${domain}"]) if zone.webredirect != null },
+    { for domain, zone in var.domains : domain => tolist(sort([for subdomain, record in zone.records : replace("${subdomain}.${domain}", "/^@\\./", "")
       if lower(record.type) == "redirect"]
     )) if length([for record in values(zone.records) : record if lower(record.type) == "redirect"]) > 0 }
   )
@@ -50,7 +50,6 @@ resource "aws_route53_record" "redirect_certificate" {
       for redirect in redirects : {
         zone  = zone
         index = index(redirects, redirect)
-
   }]]) : "${entry.zone}/${entry.index}" => entry }
 
   zone_id         = aws_route53_zone.this[each.value.zone].zone_id

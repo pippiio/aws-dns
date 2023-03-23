@@ -79,7 +79,7 @@ resource "aws_kms_alias" "dnssec" {
 }
 
 resource "aws_route53_key_signing_key" "dnssec" {
-  for_each = { for domain, zone in var.config : domain => zone if zone.disable_dnssec == false }
+  for_each = { for domain, zone in var.domains : domain => zone if zone.disable_dnssec == false }
 
   hosted_zone_id             = aws_route53_zone.this[each.key].id
   key_management_service_arn = aws_kms_key.dnssec.arn
@@ -87,7 +87,7 @@ resource "aws_route53_key_signing_key" "dnssec" {
 }
 
 resource "aws_route53_hosted_zone_dnssec" "dnssec" {
-  for_each = { for domain, zone in var.config : domain => zone if zone.disable_dnssec == false }
+  for_each = { for domain, zone in var.domains : domain => zone if zone.disable_dnssec == false }
 
   hosted_zone_id = aws_route53_key_signing_key.dnssec[each.key].hosted_zone_id
 
