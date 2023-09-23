@@ -9,7 +9,7 @@ function handler(event) {
     var queryString = event.request.querystring;
     var queryStringArray = [];
     for (var key in queryString) {
-        queryStringArray.push(`${key}=${queryString[key].value}`);
+        queryStringArray.push(`$${key}=$${queryString[key].value}`);
     }
     query = '?' + queryStringArray.join('&');
   }
