@@ -5,7 +5,6 @@ function handler(event) {
 %{ for location, domains in redirects ~}
 %{ for domain in domains ~}
     case '${domain}':
-    case 'www.${domain}':
 %{ endfor ~}
       location = '${location}';
       break;
