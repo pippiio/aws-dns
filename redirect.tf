@@ -125,7 +125,7 @@ resource "aws_cloudfront_function" "redirect" {
   comment = "HTTP 301 redirect"
   publish = true
   code = templatefile("${path.module}/function/redirect.js", {
-    redirects = { for domain, redirect in local.redirect_domains : domain => one(redirect.values) }
+    redirects = { for domain, details in var.domains : details.webredirect => domain... if details.webredirect != null }
   })
 }
 
