@@ -24,7 +24,7 @@ function handler(event) {
     for (var key in queryString) {
       queryStringArray.push(`$${key}=$${queryString[key].value}`);
     }
-    var query = '?' + queryStringArray.join('&');
+    var query = queryStringArray.length > 0 ? '?' + queryStringArray.join('&') : '';
   }
 
   return {
