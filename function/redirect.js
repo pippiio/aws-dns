@@ -1,34 +1,36 @@
 function handler(event) {
-  var statusCode = 301;
-  var description = 'Moved Permanently';
-  var headers = {}
-  var uri = (typeof event.request.uri !== 'undefined' && event.request.uri !== null) ? event.request.uri : "";
-  var query = "";
+  var location;
 
+  switch (event.request.headers.host.value) {
+%{ for location, domains in redirects ~}
+%{ for domain in domains ~}
+    case '${domain}':
+    case 'www.${domain}':
+%{ endfor ~}
+      location = '${location}';
+      break;
+%{ endfor ~}
+
+    default:
+      return {
+        statusCode: 403,
+        statusDescription: 'Forbidden',
+      };
+  }
+
+  var uri = (typeof event.request.uri !== 'undefined' && event.request.uri !== null) ? event.request.uri : "";
   if (event.request.querystring) {
     var queryString = event.request.querystring;
     var queryStringArray = [];
     for (var key in queryString) {
       queryStringArray.push(`$${key}=$${queryString[key].value}`);
     }
-    query = '?' + queryStringArray.join('&');
-  }
-
-  switch (event.request.headers.host.value) {
-%{ for domain, location in redirects ~}
-    case '${domain}':
-      headers = {'location': { value: '${location}'.replace('<uri>', uri).replace('<query>', query) }}
-      break;
-%{ endfor ~}
-
-    default:
-      var statusCode = 403;
-      var description = 'Forbidden';
+    var query = '?' + queryStringArray.join('&');
   }
 
   return {
-    statusCode: statusCode,
-    statusDescription: description,
-    headers: headers
+    statusCode: 301,
+    statusDescription: 'Moved Permanently',
+    headers: {'location': { value: location.replace('<uri>', uri).replace('<query>', query) }}
   };
 }
