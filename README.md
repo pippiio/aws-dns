@@ -7,7 +7,7 @@ The aws-dns module is made to provision and manage [AWS Route53](https://aws.ama
 Example usage:
 ```hcl
 provider "aws" {
-  region              = "us-east-1"
+  region = "us-east-1"
 }
 
 module "dns" {
