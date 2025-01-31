@@ -50,7 +50,7 @@ resource "aws_route53_record" "geoproximity" {
     }
   }
 
-  set_identifier = each.value.geoproximity != null ? each.value.key : null
+  set_identifier = each.value.value
 }
 
 resource "aws_route53_record" "cloudfront" {
