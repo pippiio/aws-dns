@@ -4,12 +4,12 @@ locals {
       "${domain}" = {
         zone   = domain
         record = "@"
-        values = [zone.webredirect]
+        values = {"${zone.webredirect}": {}}
       }
       "www.${domain}" = {
         zone   = domain
         record = "www"
-        values = [zone.webredirect]
+        values = {"${zone.webredirect}": {}}
       }
     } if zone.webredirect != null]...),
     merge(flatten([for domain, zone in var.domains : [
@@ -126,8 +126,8 @@ resource "aws_cloudfront_function" "redirect" {
   publish = true
   code = templatefile("${path.module}/function/redirect.js", {
     redirects = {
-      for value in toset([for entry in local.redirect_domains : one(entry.values)]) :
-      value => [for k, v in local.redirect_domains : k if one(v.values) == value]
+      for value in toset([for entry in local.redirect_domains : one(keys(entry.values))]) :
+      value => [for k, v in local.redirect_domains : k if one(keys(v.values)) == value]
     }
   })
 }

@@ -6,9 +6,16 @@ variable "domains" {
     postmaster     = optional(string)
 
     records = optional(map(object({
-      type   = string
-      values = set(string)
-      ttl    = optional(number, 3600)
+      type = string
+      values = map(object({
+        geoproximity = optional(object({
+          coordinates = object({
+            latitude  = number
+            longitude = number
+          })
+        }), null)
+      }))
+      ttl = optional(number, 3600)
     })), {})
   }))
 
