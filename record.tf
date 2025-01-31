@@ -6,6 +6,7 @@ resource "aws_route53_record" "this" {
         zone   = domain
         values = record.values
         type   = record.type
+        geoproximity = record.geoproximity
         ttl    = record.ttl
         } if !contains([
           "cloudfront",
@@ -19,6 +20,17 @@ resource "aws_route53_record" "this" {
   ttl             = each.value.ttl
   records         = each.value.values
   allow_overwrite = false
+
+  dynamic "geoproximity_routing_policy" {
+    for_each = each.value.geoproximity != null ? [true] : []
+
+    content {
+      coordinates {
+        latitude  = each.value.geoproximity.coordinates.latitude
+        longitude = each.value.geoproximity.coordinates.longitude
+      }
+    }
+  }
 }
 
 resource "aws_route53_record" "cloudfront" {

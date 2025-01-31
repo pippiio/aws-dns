@@ -8,6 +8,12 @@ variable "domains" {
     records = optional(map(object({
       type   = string
       values = set(string)
+      geoproximity = optional(object({
+        coordinates = object({
+          latitude  = number
+          longitude = number
+        })
+      }, null))
       ttl    = optional(number, 3600)
     })), {})
   }))
