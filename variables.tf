@@ -60,7 +60,7 @@ variable "domains" {
     )
     condition = alltrue([for domain, zone in var.domains : contains(["disabled", "custom", "fastmail", "protonmail", "gmail"], zone.email)])
   }
-//The token never contains dots, so a dot means the full hostname was pasted instead of just the identifier.
+  //The token never contains dots, so a dot means the full hostname was pasted instead of just the identifier.
   validation {
     error_message = format("email_dkim_token must be the identifier only, not the full hostname. The following entries are invalid: [%s].",
       join(", ", [for domain, zone in var.domains : domain
