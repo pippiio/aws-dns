@@ -35,8 +35,13 @@ locals {
         "10 mail.protonmail.ch",
         "20 mailsec.protonmail.ch",
       ]
-      spf  = "v=spf1 include:_spf.protonmail.ch mx ~all"
-      dkim = {}
+      spf = "v=spf1 include:_spf.protonmail.ch mx ~all"
+      //Same identifier in all three, only the selector differs. Three selectors let Proton rotate keys without DNS changes.
+      dkim = {
+        "protonmail._domainkey"  = "protonmail.domainkey.<dkim_token>.domains.proton.ch"
+        "protonmail2._domainkey" = "protonmail2.domainkey.<dkim_token>.domains.proton.ch"
+        "protonmail3._domainkey" = "protonmail3.domainkey.<dkim_token>.domains.proton.ch"
+      }
     }
 
     gmail = {
@@ -88,13 +93,19 @@ resource "aws_route53_record" "dmarc" {
 }
 
 resource "aws_route53_record" "dkim" {
+  //Skip records where the token is still a placeholder, so we never publish a CNAME pointing at a literal <dkim_token>
   for_each = { for entry in flatten([for domain, zone in var.domains : [
     for name, record in local.email_provider[zone.email].dkim : {
       domain = domain
       name   = name
-      record = replace(record, "/<domain>/", domain)
+      record = replace(
+        replace(record, "/<domain>/", domain),
+        "/<dkim_token>/",
+        coalesce(zone.email_dkim_token, "<dkim_token>"),
+      )
     }]
-  ]) : "${entry.domain}/${entry.name}" => entry }
+    ]) : "${entry.domain}/${entry.name}" => entry
+  if length(regexall("<dkim_token>", entry.record)) == 0 }
 
   zone_id         = aws_route53_zone.this[each.value.domain].zone_id
   name            = each.value.name

@@ -31,7 +31,7 @@ module "dns" {
         }
         "web" = {
           type   = "cname"
-          values = ["www.example.com"]
+          values = ["[www.example.com](https://www.example.com)"]
         }
         "$" = { # Apex mx record
           type = "mx"
@@ -49,8 +49,19 @@ module "dns" {
     }
     "example.co" = {
       disable_dnssec = true                      # DNSSEC not supported for .co tld 
-      webredirect    = "https://www.example.com" # HTTPS redirect for example.co & www.example.co using AWS CloudFront
+      webredirect    = "https://www.example.com" # HTTPS redirect for example.co & [www.example.co](https://www.example.co) using AWS CloudFront
+    }
+    "example.dk" = {
+      email            = "protonmail"
+      email_dkim_token = "dxxxxxxxxxxxxxxxxxxxx" # From Proton, after domain verification
     }
   }
 }
+
 ```
+
+### Proton Mail
+
+`email = "protonmail"` creates MX, SPF and DMARC. DKIM needs a second apply, because Proton only generates the identifier after the domain is verified: add Proton's `protonmail-verification` TXT as an apex (`#`) record, verify, then set `email_dkim_token`.
+
+The identifier is the middle segment of the CNAME target — in `protonmail.domainkey.dxxxx.domains.proton.ch` it is `dxxxx`.
