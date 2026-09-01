@@ -31,7 +31,7 @@ module "dns" {
         }
         "web" = {
           type   = "cname"
-          values = ["[www.example.com](https://www.example.com)"]
+          values = ["www.example.com"]
         }
         "$" = { # Apex mx record
           type = "mx"
@@ -49,7 +49,7 @@ module "dns" {
     }
     "example.co" = {
       disable_dnssec = true                      # DNSSEC not supported for .co tld 
-      webredirect    = "https://www.example.com" # HTTPS redirect for example.co & [www.example.co](https://www.example.co) using AWS CloudFront
+            webredirect    = "https://www.example.com" # HTTPS redirect for example.co & www.example.co using AWS CloudFront using AWS CloudFront
     }
     "example.dk" = {
       email            = "protonmail"
