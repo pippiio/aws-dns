@@ -23,9 +23,9 @@ locals {
       ]
       spf = "v=spf1 include:spf.messagingengine.com ~all"
       dkim = {
-        "fm1._domainkey" = "fm1.<domain>.dkim.fmhosted.com"
-        "fm2._domainkey" = "fm2.<domain>.dkim.fmhosted.com"
-        "fm3._domainkey" = "fm3.<domain>.dkim.fmhosted.com"
+        "fm1" = { cname = "fm1.%s.dkim.fmhosted.com" }
+        "fm2" = { cname = "fm2.%s.dkim.fmhosted.com" }
+        "fm3" = { cname = "fm3.%s.dkim.fmhosted.com" }
       }
     }
 
@@ -97,9 +97,9 @@ resource "aws_route53_record" "dkim" {
   ]) : "${entry.domain}/${entry.name}" => entry }
 
   zone_id         = aws_route53_zone.this[each.value.domain].zone_id
-  name            = each.value.name
-  type            = "CNAME"
+  name            = format("%s._domainkey.%s", each.value.selector, each.value.domain)
+  type            = each.value.type
   ttl             = 300
-  records         = [each.value.record]
+  records         = [each.value.value]
   allow_overwrite = false
 }
