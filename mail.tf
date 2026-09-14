@@ -93,7 +93,6 @@ resource "aws_route53_record" "dmarc" {
 }
 
 resource "aws_route53_record" "dkim" {
-    //'email_dkim_token' is optional because Proton only generates it after domain verification. Records are skipped until it is set.
   for_each = { for entry in flatten([for domain, zone in var.domains : [
     for name, record in local.email_provider[zone.email].dkim : {
       domain = domain

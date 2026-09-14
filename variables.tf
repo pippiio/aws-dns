@@ -1,3 +1,15 @@
+locals {
+  dkim_token_enabled = ["protonmail","gmail"]
+}
+
+variable "email" {
+  type = object({
+    enable_strict_dmarc = optional(bool, false)
+    default_postmaster  = optional(string)
+  })
+  default = {}
+}
+
 variable "domains" {
   type = map(object({
     disable_dnssec = optional(bool, false)
@@ -68,12 +80,13 @@ variable "domains" {
     condition = alltrue([for domain, zone in var.domains :
     zone.email_dkim_token == null || length(regexall("\\.", zone.email_dkim_token)) == 0])
   }
-}
-
-variable "email" {
-  type = object({
-    enable_strict_dmarc = optional(bool, false)
-    default_postmaster  = optional(string)
-  })
-  default = {}
+   //The token never contains dots, so a dot means the full hostname was pasted instead of just the identifier.
+  validation {
+    error_message = format("email_dkim_token is only supported for %s for now. Check your input [%s].",
+      join(", ", local.dkim_token_enabled),
+      join(", ", [for domain, zone in var.domains : domain
+    if contains(local.dkim_token_enabled, zone.email)  ? length(trim(coalesce(zone.email_dkim_token," "), " ")) == 0 : length(trim(coalesce(zone.email_dkim_token," "), " ")) > 0]))
+    condition = alltrue([for domain, zone in var.domains :
+    contains(local.dkim_token_enabled, zone.email) ? length(trim(coalesce(zone.email_dkim_token," "), " ")) > 0 : true ])
+  }
 }
