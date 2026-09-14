@@ -4,12 +4,12 @@ locals {
       "${domain}" = {
         zone   = domain
         record = "@"
-        values = {"${zone.webredirect}": {}}
+        values = { "${zone.webredirect}" : {} }
       }
       "www.${domain}" = {
         zone   = domain
         record = "www"
-        values = {"${zone.webredirect}": {}}
+        values = { "${zone.webredirect}" : {} }
       }
     } if zone.webredirect != null]...),
     merge(flatten([for domain, zone in var.domains : [
