@@ -1,0 +1,29 @@
+techchapter.com:
+  email: fastmail
+  records:
+    - "@":
+        type: redirect
+        values:
+          "https://www.techchapter.com<uri><query>": {}
+
+test1.dk:
+  email: fastmail
+
+test2.dk:
+  email: protonmail
+  email_dkim_token: dtesttoken123
+
+test3.dk:
+  email: protonmail
+
+test4.dk:
+  email: gmail
+
+test5.dk:
+  email: gmail
+
+test6.dk:
+  email: disabled
+
+test7.dk:
+  email: disabled
