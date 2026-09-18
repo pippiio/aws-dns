@@ -10,7 +10,6 @@ protontest.dk:
   email: protonmail
   email_dkim_token: dtesttoken123
 
-
 test1.dk: 
   email: protonmail
 

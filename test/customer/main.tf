@@ -1,6 +1,6 @@
 module "dns" {
   source = "./.."
-  // Variables can be given as imnput here to the module
+  // Variables can be given as input here to the module
   domains = { for _, domain in local.domains : _ => merge(domain, { records = try(merge(domain.records...), {}) }) }
 }
 
