@@ -2,11 +2,11 @@ resource "aws_route53_record" "this" {
   for_each = { for entry in flatten([
     for domain, zone in var.domains : [
       for key, record in zone.records : {
-        key          = key
-        zone         = domain
-        values       = record.values
-        type         = record.type
-        ttl          = record.ttl
+        key    = key
+        zone   = domain
+        values = record.values
+        type   = record.type
+        ttl    = record.ttl
         } if !contains([
           "cloudfront",
           "redirect",
@@ -34,7 +34,7 @@ resource "aws_route53_record" "geoproximity" {
           type         = record.type
           ttl          = record.ttl
           geoproximity = value.geoproximity
-        }]) if lower(record.type) == "cname_geoproximity" || lower(record.type) == "a_geoproximity"]]) : "${entry.zone}/${entry.type}/${entry.key}/${entry.value}" => entry }
+  }]) if lower(record.type) == "cname_geoproximity" || lower(record.type) == "a_geoproximity"]]) : "${entry.zone}/${entry.type}/${entry.key}/${entry.value}" => entry }
 
   zone_id         = aws_route53_zone.this[each.value.zone].zone_id
   name            = replace("${each.value.key}.${each.value.zone}", "/^[!@#$%&]\\./", "")
@@ -96,9 +96,9 @@ locals {
   txt_apex_records = flatten([for domain, zone in var.domains : [
     for name, record in try(contains(keys(zone.records), "#"), false) ? zone.records : tomap({
       "#" = {
-        type         = "txt"
-        ttl          = 300
-        values       = {}
+        type   = "txt"
+        ttl    = 300
+        values = {}
       } }) : {
       domain = domain
       type   = "txt"
@@ -107,7 +107,7 @@ locals {
         record.values,
         anytrue([
           for value in keys(record.values) : length(regexall("^v=spf", value)) > 0
-        ]) ? {} : try({"${local.email_provider[zone.email].spf}": {}}, [])
+        ]) ? {} : try({ "${local.email_provider[zone.email].spf}" : {} }, [])
       )
   } if contains(["#", "!"], name) && record.type == "txt"]])
 

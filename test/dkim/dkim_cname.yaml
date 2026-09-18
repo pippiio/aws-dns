@@ -1,0 +1,28 @@
+domains:
+  test1.dk:
+    email: "fastmail"
+
+  test2.dk:
+    email: "protonmail"
+    dkim:
+      protonmail._domainkey: # domainkey
+        cname: "protonmail.domainkey.docojfgcaj7oz7hpd3nehbqlisnfoq2w7ovtulj3qw45nr6kp54ia.domains.proton.ch."
+
+      protonmail2._domainkey: # domainkey
+        cname:  "protonmail2.domainkey.docojfgcaj7oz7hpd3nehbqlisnfoq2w7ovtulj3qw45nr6kp54ia.domains.proton.ch."
+
+      protonmail3._domainkey:  # domainkey
+        cname: "protonmail3.domainkey.docojfgcaj7oz7hpd3nehbqlisnfoq2w7ovtulj3qw45nr6kp54ia.domains.proton.ch."
+
+  test3.dk:
+    email: "gmail"
+    dkim:
+      google._domainkey: # domainkey
+        v: "DKIM1"
+        k: "rsa"
+        p: "abc123xyz" # min gmail public key
+
+  test4.dk:
+    email: "disabled"
+
+zone_id: "1234"

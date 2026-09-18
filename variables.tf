@@ -1,9 +1,23 @@
+locals {
+  dkim_token_enabled = ["protonmail", "gmail"]
+}
+
+variable "email" {
+  type = object({
+    enable_strict_dmarc = optional(bool, false)
+    default_postmaster  = optional(string)
+  })
+  default = {}
+}
+
 variable "domains" {
   type = map(object({
     disable_dnssec = optional(bool, false)
     webredirect    = optional(string)
     email          = optional(string, "disabled")
     postmaster     = optional(string)
+    //DKIM identifier that the provider generates and we can't derive ourselves
+    email_dkim_token = optional(string)
 
     records = optional(map(object({
       type = string
@@ -58,12 +72,23 @@ variable "domains" {
     )
     condition = alltrue([for domain, zone in var.domains : contains(["disabled", "custom", "fastmail", "protonmail", "gmail"], zone.email)])
   }
-}
 
-variable "email" {
-  type = object({
-    enable_strict_dmarc = optional(bool, false)
-    default_postmaster  = optional(string)
-  })
-  default = {}
+  //The token never contains dots, so a dot means the full hostname was pasted instead of just the identifier.
+  validation {
+    error_message = format("email_dkim_token must be the identifier only, not the full hostname. The following entries are invalid: [%s].",
+      join(", ", [for domain, zone in var.domains : domain
+    if zone.email_dkim_token != null && length(regexall("\\.", zone.email_dkim_token)) > 0]))
+    condition = alltrue([for domain, zone in var.domains :
+    zone.email_dkim_token == null || length(regexall("\\.", zone.email_dkim_token)) == 0])
+  }
+
+  //Only protonmail and gmail generate a token. It stays optional for them, since the provider issues it after domain verification.
+  validation {
+    error_message = format("email_dkim_token is only supported for %s for now. Check your input [%s].",
+      join(", ", local.dkim_token_enabled),
+      join(", ", [for domain, zone in var.domains : domain
+    if !contains(local.dkim_token_enabled, zone.email) && length(trim(coalesce(zone.email_dkim_token, " "), " ")) > 0]))
+    condition = alltrue([for domain, zone in var.domains :
+    contains(local.dkim_token_enabled, zone.email) ? true : length(trim(coalesce(zone.email_dkim_token, " "), " ")) == 0])
+  }
 }
