@@ -4,7 +4,7 @@ locals {
     disabled = {
       mx_wildcard = false
       mx          = []
-      spf         = "v=spf1 ~all"
+      spf         = "v=spf1 -all"
       dkim        = {}
     }
 
@@ -88,13 +88,15 @@ resource "aws_route53_record" "dmarc" {
 }
 
 resource "aws_route53_record" "dkim" {
-  for_each = { for entry in flatten([for domain, zone in var.domains : [
-    for name, record in local.email_provider[zone.email].dkim : {
-      domain = domain
-      name   = name
-      record = replace(record, "/<domain>/", domain)
-    }]
-  ]) : "${entry.domain}/${entry.name}" => entry }
+  for_each = { for _ in flatten([
+    for _domain, _zone in var.domains : [
+      for _selector, _record in _zone.dkim != null ? _zone.dkim : local.email_provider[_zone.email].dkim : {
+        domain   = _domain
+        selector = _selector
+        type     = _record.cname != null ? "CNAME" : "TXT"
+        value    = _record.cname != null ? try(format(_record.cname, _domain), "") : format("v=%s; k=%s; p=%s", _record.v, _record.k, _record.p)
+      }
+  ]]) : "${_.domain}/${_.selector}" => _ }
 
   zone_id         = aws_route53_zone.this[each.value.domain].zone_id
   name            = format("%s._domainkey.%s", each.value.selector, each.value.domain)
