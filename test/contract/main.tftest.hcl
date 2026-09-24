@@ -6,7 +6,6 @@ run "email_disabled" {
   variables {
     domains = {
       "pippi.io" = {
-        records = {}
         email   = "disabled"
       }
     }
@@ -44,7 +43,6 @@ run "email_fastmail" {
   variables {
     domains = {
       "pippi.io" = {
-        records = {}
         email   = "fastmail"
       }
     }
@@ -64,16 +62,16 @@ run "email_fastmail" {
 
   assert {
     error_message = "Multiple DKIM cname records should be created when email provider is set to 'fastmail'."
-    condition     = length(aws_route53_record.dkim) >= 3
+    condition     = length(aws_route53_record.dkim) == 3
   }
 
   assert {
-    error_message = "SPF record should include fastmail servers when email provider is set to 'disabled'."
+    error_message = "SPF record should include fastmail servers when email provider is set to 'fastmail'."
     condition     = contains(aws_route53_record.txt["pippi.io/#"].records, "v=spf1 include:spf.messagingengine.com ~all")
   }
 
   assert {
-    error_message = "DMARC record should be created when email provider is set to 'disabled'."
+    error_message = "DMARC record should be created when email provider is set to 'fastmail'."
     condition     = contains(keys(aws_route53_record.dmarc), "pippi.io")
   }
 }
@@ -82,7 +80,6 @@ run "email_gmail" {
   variables {
     domains = {
       "pippi.io" = {
-        records = {}
         email   = "gmail"
         dkim = {
           "google" = {
@@ -107,7 +104,7 @@ run "email_gmail" {
 
   assert {
     error_message = "DKIM record should be created when email provider is set to 'gmail'."
-    condition     = length(aws_route53_record.dkim) >= 1
+    condition     = length(aws_route53_record.dkim) == 1
   }
 
   assert {
@@ -135,7 +132,6 @@ run "protonmail" {
   variables {
     domains = {
       "pippi.io" = {
-        records = {}
         email   = "protonmail"
         dkim = {
           "protonmail" = {
@@ -153,4 +149,39 @@ run "protonmail" {
   }
 
   command = plan
+
+  assert {
+    error_message = "MX record should be created when email provider is set to 'protonmail'."
+    condition     = length(aws_route53_record.mx["pippi.io"].records) == 2
+  }
+
+  assert {
+    error_message = "No Wildcard MX record should be created when email provider is set to 'protonmail'."
+    condition     = length(keys(aws_route53_record.mx_wildcard)) == 0
+  }
+
+  assert {
+    error_message = "DMARC record should be created when email provider is set to 'protonmail'."
+    condition     = contains(keys(aws_route53_record.dmarc), "pippi.io")
+  }
+
+  assert {
+    error_message = "Three DKIM records should be created when email provider is set to 'protonmail'."
+    condition     = length(aws_route53_record.dkim) == 3
+  }
+
+  assert {
+    error_message = "DKIM records should be CNAME type when email provider is set to 'protonmail'."
+    condition     = aws_route53_record.dkim["pippi.io/protonmail"].type == "CNAME"
+  }
+
+  assert {
+    error_message = "DKIM CNAME record should point to the provided proton value when email provider is set to 'protonmail'."
+    condition     = one(aws_route53_record.dkim["pippi.io/protonmail"].records) == "protonmail.domainkey.abc123xyz.domains.proton.ch."
+  }
+
+  assert {
+    error_message = "SPF record should include protonmail servers when email provider is set to 'protonmail'."
+    condition     = contains(aws_route53_record.txt["pippi.io/#"].records, "v=spf1 include:_spf.protonmail.ch mx ~all")
+  }
 }

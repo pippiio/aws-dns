@@ -94,7 +94,7 @@ resource "aws_route53_record" "dkim" {
         domain   = _domain
         selector = _selector
         type     = _record.cname != null ? "CNAME" : "TXT"
-        value    = _record.cname != null ? try(format(_record.cname, _domain), "") : format("v=%s; k=%s; p=%s", _record.v, _record.k, _record.p)
+        value    = _record.cname != null ? try(format(_record.cname, _domain), _record.cname) : format("v=%s; k=%s; p=%s", _record.v, _record.k, _record.p)
       }
   ]]) : "${_.domain}/${_.selector}" => _ }
 
