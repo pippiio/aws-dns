@@ -5,6 +5,13 @@ variable "domains" {
     email          = optional(string, "disabled")
     postmaster     = optional(string)
 
+    dkim = optional(map(object({
+      cname = optional(string)
+      p     = optional(string)
+      v     = optional(string, "DKIM1")
+      k     = optional(string, "rsa")
+    })))
+
     records = optional(map(object({
       type = string
       values = map(object({
@@ -57,6 +64,46 @@ variable "domains" {
       join(", ", [for domain, zone in var.domains : "${domain}:${zone.email}" if !contains(["disabled", "custom", "fastmail", "protonmail", "gmail"], zone.email)])
     )
     condition = alltrue([for domain, zone in var.domains : contains(["disabled", "custom", "fastmail", "protonmail", "gmail"], zone.email)])
+  }
+
+  validation {
+    error_message = "DKIM records require public key (p) for Gmail"
+    condition = alltrue([
+      for _zone in values(var.domains) : _zone.dkim != null && length(_zone.dkim) > 0 && alltrue([
+        for _record in values(_zone.dkim) : coalesce(_record.p, "n/a") != "n/a"
+      ])
+      if _zone.email == "gmail"
+    ])
+  }
+
+  validation {
+    error_message = "DKIM records require CNAME for ProtonMail"
+    condition = alltrue([
+      for _zone in values(var.domains) : _zone.dkim != null && length(_zone.dkim) > 0 && alltrue([
+        for _record in values(_zone.dkim) : coalesce(_record.cname, "n/a") != "n/a"
+      ])
+      if _zone.email == "protonmail"
+    ])
+  }
+
+  validation {
+    error_message = "DKIM selector must match pattern ^[a-zA-Z0-9._-]+$"
+    condition = alltrue([
+      for _zone in values(var.domains) : alltrue([
+        for _selector in keys(_zone.dkim) : can(regex("^[a-zA-Z0-9._-]+$", _selector))
+      ])
+      if _zone.dkim != null
+    ])
+  }
+
+  validation {
+    error_message = "DKIM records cname and p are mutable expclusive."
+    condition = alltrue([
+      for _zone in values(var.domains) : alltrue([
+        for _record in values(_zone.dkim) : _record.cname == null || _record.p == null
+      ])
+      if _zone.dkim != null
+    ])
   }
 }
 
